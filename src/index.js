@@ -75,10 +75,17 @@ class CLI extends EventEmitter {
     const cmd = config.manifest[command]
     if (!cmd) return unknown(command)
 
-    const result = getOpts(argv, {
-      '-d, --db': '<DB>'
-    })
+    // Parse command-line options.
+    const manifest = {}
+    for (const { name, short, long, required } of config.manifest[command]?.options ?? []) {
+      let options = []
+      if (short) options.push(`-${short}`)
+      if (long) options.push(`-${long}`)
+      manifest[options.join(', ')] = `${name}`
+    }
+    const result = getOpts(argv, manifest)
 
+    // Collect command options.
     const opts = {}
     for (const { name, short, long, required } of config.manifest[command]?.options ?? []) {
       if (result.options[short]) opts[name] = result.options[short]
@@ -86,6 +93,7 @@ class CLI extends EventEmitter {
       if (required && !opts[name]) return missing(command, `-${short} ${name}, --${long}=${name}`)
     }
 
+    // Collect command arguments.
     const args = {}
     let i = 1
     for (const [ arg, value ] of Object.entries(config.manifest[command]?.args ?? {})) {
