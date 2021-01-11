@@ -4,6 +4,7 @@ const path = require('path')
 const getOpts = require('get-options')
 const { checkForUpdates } = require('./checkForUpdates')
 const { vsprintf } = require('printj')
+const prompts = require('prompts')
 
 let log = (msg) => {
   process.stdout.write(msg)
@@ -64,7 +65,7 @@ class CLI extends EventEmitter {
     return this
   }
 
-  run(argv) {
+  async run(argv) {
     if (!argv) argv = process.argv.slice(2)
     if (!argv || argv.length <= 0) return help()
     if (argv.length === 1 && argv[0] === 'help') return help()
@@ -93,8 +94,13 @@ class CLI extends EventEmitter {
       if (!optional && !args[arg]) return missing(command, `${arg}`)
     }
 
-    const toolbox = { log: config.console.log, ...config.toolbox }
-    cmd.run(toolbox, { ...opts, ...args })
+    try {
+      const toolbox = { log: config.console.log, prompts, ...config.toolbox }
+      await cmd.run(toolbox, { ...opts, ...args })
+    }
+    catch (error) {
+      config.console.log(`Error: ${error.message}`)
+    }
   }
 }
 
