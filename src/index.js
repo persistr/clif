@@ -23,9 +23,10 @@ let config = {
 }
 
 class CLI extends EventEmitter {
-  constructor(name) {
+  constructor(pkgname, execname) {
     super()
-    config.name = name
+    config.pkgname = pkgname
+    config.execname = execname
   }
 
   plugins(plugins) {
@@ -61,7 +62,7 @@ class CLI extends EventEmitter {
   }
 
   checkForUpdates() {
-    checkForUpdates(config.name, config.version)
+    checkForUpdates(config.pkgname, config.version)
     return this
   }
 
@@ -140,7 +141,7 @@ function help(command) {
   // Display CLI version.
   if (!command) {
     config.console.log('VERSION')
-    config.console.log(`  ${execname()} v${config.version} ${process?.platform}-${process?.arch} ${process?.release?.name}-${process?.version}`)
+    config.console.log(`  ${config.pkgname}@${config.version} ${process?.platform}-${process?.arch} ${process?.release?.name}-${process?.version}`)
     config.console.log()
   }
 
@@ -256,12 +257,12 @@ function usage(command) {
 }
 
 function execname() {
-  if (config.name) return config.name
+  if (config.execname) return config.execname
   const file = process.argv.slice(1).shift()
   return path.parse(file).name
 }
 
-module.exports = { build: (name) => { return new CLI(name) }}
+module.exports = { build: (pkgname, execname) => { return new CLI(pkgname, execname) }}
 
 // In browsers, install a global object.
 const isBrowser = typeof window !== 'undefined' && ({}).toString.call(window) === '[object Window]'
