@@ -140,8 +140,7 @@ function help(command) {
   // Display CLI version.
   if (!command) {
     config.console.log('VERSION')
-    //config.console.log(`  ${execname()}/${config.version} ${process?.platform}-${process?.arch} ${process?.release?.name}-${process?.version}`)
-    config.console.log(`  ${execname()}/${config.version}`)
+    config.console.log(`  ${execname()} v${config.version} ${process?.platform}-${process?.arch} ${process?.release?.name}-${process?.version}`)
     config.console.log()
   }
 
