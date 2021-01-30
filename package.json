@@ -1,6 +1,6 @@
 {
   "name": "@persistr/clif",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "CLIF - CLI framework for Node.js",
   "main": "src/index.js",
   "scripts": {
