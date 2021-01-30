@@ -187,7 +187,7 @@ function usage(command) {
       usage += `${command}`
       if (subcommands.length > 0) usage += `:COMMAND`
       if (options) usage += ' OPTIONS'
-      if (args) usage += ' ' + Object.keys(args).join(' ')
+      if (args) usage += ' ' + Object.keys(args).map(key => args[key].optional ? `[${key}]` : key).join(' ')
     }
     else {
       usage += `COMMAND`
