@@ -67,14 +67,19 @@ class CLI extends EventEmitter {
   }
 
   async run(argv) {
+    // Display help.
     if (!argv) argv = process.argv.slice(2)
     if (!argv || argv.length <= 0) return help()
     if (argv.length === 1 && argv[0] === 'help') return help()
     if (argv.length === 2 && argv[0] === 'help') return help(argv[1])
 
+    // Parse command.
     const command = argv[0]
     const cmd = config.manifest[command]
     if (!cmd) return unknown(command)
+
+    // If command is not executable, display help.
+    if (!cmd.run) return help(command)
 
     // Parse command-line options.
     const manifest = {}
