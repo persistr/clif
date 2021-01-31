@@ -25,13 +25,17 @@ let config = {
 class CLI extends EventEmitter {
   constructor(pkgname, execname) {
     super()
+    this.prerun = []
+    this.postrun = []
     config.pkgname = pkgname
     config.execname = execname
   }
 
   plugins(plugins) {
     for (const plugin of plugins) {
-      plugin.initialize(config.toolbox)
+      const hooks = plugin.initialize(config.toolbox)
+      if (hooks && hooks.prerun) Array.isArray(hooks.prerun) ? this.prerun.push(...hooks.prerun) : this.prerun.push(hooks.prerun)
+      if (hooks && hooks.postrun) Array.isArray(hooks.postrun) ? this.prerun.push(...hooks.postrun) : this.postrun.push(hooks.postrun)
     }
     return this
   }
@@ -108,9 +112,13 @@ class CLI extends EventEmitter {
       if (!optional && !args[arg]) return missing(command, `${arg}`)
     }
 
+    // Run the command.
     try {
       const toolbox = { log: config.console.log, prompts, ...config.toolbox }
-      await cmd.run(toolbox, { ...opts, ...args })
+      const params = { ...opts, ...args }
+      for (let prerun of this.prerun) await prerun(toolbox, cmd, params)
+      await cmd.run(toolbox, params)
+      for (let postrun of this.postrun) await postrun(toolbox, cmd, params)
     }
     catch (error) {
       config.console.log(`ERROR: ${error.message}`)
