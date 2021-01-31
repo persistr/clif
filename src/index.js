@@ -74,7 +74,7 @@ class CLI extends EventEmitter {
     if (argv.length === 2 && argv[0] === 'help') return help(argv[1])
 
     // Parse command.
-    const command = argv[0]
+    const command = argv[0].endsWith(':') ? argv[0].slice(0, -1) : argv[0]
     const cmd = config.manifest[command]
     if (!cmd) return unknown(command)
 
