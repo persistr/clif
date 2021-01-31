@@ -24,6 +24,7 @@
   "dependencies": {
     "chalk": "^4.1.0",
     "ci-info": "^2.0.0",
+    "colors": "^1.4.0",
     "columnify": "^1.5.4",
     "get-options": "^1.2.0",
     "has-unicode": "^2.0.1",

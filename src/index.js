@@ -1,3 +1,4 @@
+const colors = require('colors')
 const columnify = require('columnify')
 const { EventEmitter } = require('events')
 const path = require('path')
@@ -80,61 +81,57 @@ class CLI extends EventEmitter {
     // Parse command.
     const command = argv[0].endsWith(':') ? argv[0].slice(0, -1) : argv[0]
     const cmd = config.manifest[command]
-    if (!cmd) return unknown(command)
 
-    // If command is not executable, display help.
-    if (!cmd.run) return help(command)
-
-    // Parse command-line options.
-    const manifest = {}
-    for (const { name, short, long, type, required } of config.manifest[command]?.options ?? []) {
-      let options = []
-      if (short) options.push(`-${short}`)
-      if (long) options.push(`-${long}`)
-      manifest[options.join(', ')] = (type && type === 'string') ? `${name}` : ''
-    }
-    const result = getOpts(argv, manifest)
-
-    // Collect command options.
-    const opts = {}
-    for (const { name, short, long, required } of config.manifest[command]?.options ?? []) {
-      if (result.options[short]) opts[name] = result.options[short]
-      else if (result.options[long]) opts[name] = result.options[long]
-      if (required && !opts[name]) return missing(command, `-${short} ${name}, --${long}=${name}`)
-    }
-
-    // Collect command arguments.
-    const args = {}
-    let i = 1
-    for (const [ arg, value ] of Object.entries(config.manifest[command]?.args ?? {})) {
-      if (i < result.argv.length) args[arg] = result.argv[i++]
-      const optional = value?.optional
-      if (!optional && !args[arg]) return missing(command, `${arg}`)
-    }
-
-    // Run the command.
     try {
-      const toolbox = { log: config.console.log, prompts, ...config.toolbox }
+      // If command is unknown or not executable, display help.
+      if (!cmd) throw new Error(`Unknown command "${command}"`)
+      if (!cmd.run) return help(command)
+
+      // Parse command-line options.
+      const manifest = {}
+      for (const { name, short, long, type, required } of config.manifest[command]?.options ?? []) {
+        let options = []
+        if (short) options.push(`-${short}`)
+        if (long) options.push(`-${long}`)
+        manifest[options.join(', ')] = (type && type === 'string') ? `${name}` : ''
+      }
+      const result = getOpts(argv, manifest)
+
+      // Collect command options.
+      const opts = {}
+      for (const { name, short, long, required } of config.manifest[command]?.options ?? []) {
+        if (result.options[short]) opts[name] = result.options[short]
+        else if (result.options[long]) opts[name] = result.options[long]
+        if (required && !opts[name]) throw new Error(`Missing required option "-${short} ${name}, --${long}=${name}"`)
+      }
+
+      // Collect command arguments.
+      const args = {}
+      let i = 1
+      for (const [ arg, value ] of Object.entries(config.manifest[command]?.args ?? {})) {
+        if (i < result.argv.length) args[arg] = result.argv[i++]
+        const optional = value?.optional
+        if (!optional && !args[arg]) throw new Error(`Missing required parameter "${arg}"`)
+        value?.validate(args[arg])
+      }
+
+      // Run the command.
+      const toolbox = { colors, log: config.console.log, prompts, ...config.toolbox }
       const params = { ...opts, ...args }
       for (let prerun of this.prerun) await prerun(toolbox, cmd, params)
       await cmd.run(toolbox, params)
       for (let postrun of this.postrun) await postrun(toolbox, cmd, params)
     }
     catch (error) {
-      config.console.log(`ERROR: ${error.message}`)
+      // Display help page for the command.
+      if (cmd) {
+        help(command)
+      }
+
+      // Display error message.
+      config.console.log('%s %s', 'ERROR:'.brightRed, error.message)
     }
   }
-}
-
-function unknown(command) {
-  config.console.log(`ERROR: Unknown command "${command}"\n`)
-}
-
-function missing(command, value) {
-  config.console.log(`ERROR: Missing required "${value}"\n`)
-
-  // Display help page for the command.
-  help(command)
 }
 
 /**
@@ -156,7 +153,7 @@ function help(command) {
 
   // Display CLI version.
   if (!command) {
-    config.console.log('VERSION')
+    config.console.log('VERSION'.bold)
     config.console.log(`  ${config.pkgname}@${config.version} ${process?.platform}-${process?.arch} ${process?.release?.name}-${process?.version}`)
     config.console.log()
   }
@@ -167,7 +164,7 @@ function help(command) {
 
 function usage(command) {
   const cmd = config.manifest[command]
-  if (command && !cmd) return unknown(command)
+  if (command && !cmd) throw new Error(`Unknown command "${command}"`)
 
   const subcommands = Object.entries(config.manifest)
     .filter(([ cmd, value ]) => {
@@ -192,7 +189,7 @@ function usage(command) {
   const examples = config.manifest[command]?.examples
 
   if (cmd) {
-    config.console.log('USAGE')
+    config.console.log('USAGE'.bold)
     let usage = `  $ ${execname()} `
     if (command) {
       usage += `${command}`
@@ -207,12 +204,12 @@ function usage(command) {
   }
 
   if (options) {
-    config.console.log('OPTIONS')
+    config.console.log('OPTIONS'.bold)
     const params = options
       .map(({ name, short, long, description, type, required }) => {
         if (!type) type = 'bool'
-        if (type === 'bool') return { option: `-${short}, --${long}`, desc: `${required ? '(required)' : '(optional)'} ${description}` }
-        return { option: `-${short} ${name}, --${long}=${name}`, desc: `${required ? '(required)' : '(optional)'} ${description}` }
+        if (type === 'bool') return { option: `-${short}, --${long}`, desc: `${required ? '(required)'.grey : '(optional)'.grey} ${description}` }
+        return { option: `-${short} ${name}, --${long}=${name}`, desc: `${required ? '(required)'.grey : '(optional)'.grey} ${description}` }
       })
     const descriptions = columnify(params, {
       columns: ['_', 'option', 'desc'],
@@ -224,13 +221,13 @@ function usage(command) {
   }
 
   if (args) {
-    config.console.log('PARAMETERS')
+    config.console.log('PARAMETERS'.bold)
     const params = Object.entries(args)
       .map(([ param, value ]) => {
         return { param, desc: value?.description ?? value, optional: value?.optional }
       })
       .map(({ param, desc, optional }) => {
-        return { param, desc: `${optional ? '(optional)' : '(required)'} ${desc}` }
+        return { param, desc: `${optional ? '(optional)'.grey : '(required)'.grey} ${desc}` }
       })
     const descriptions = columnify(params, {
       columns: ['_', 'param', 'desc'],
@@ -242,19 +239,19 @@ function usage(command) {
   }
 
   if (config.manifest[command]?.description) {
-    config.console.log('DESCRIPTION')
+    config.console.log('DESCRIPTION'.bold)
     config.console.log(config.manifest[command]?.description.trim().replace(/^[ \f\t\v\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]*/gm, '  '))
     config.console.log()
   }
 
   if (examples) {
-    config.console.log('EXAMPLES')
+    config.console.log('EXAMPLES'.bold)
     config.console.log(examples.map(example => '  ' + example).join('\n'))
     config.console.log()
   }
 
   if (command && subcommands.length > 0 || !command) {
-    config.console.log('COMMANDS')
+    config.console.log('COMMANDS'.bold)
     const commands = Object.entries(config.manifest)
       .filter(([ cmd, value ]) => {
         if (command && `${cmd}`.startsWith(`${command}:`)) return true
