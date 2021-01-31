@@ -83,11 +83,11 @@ class CLI extends EventEmitter {
 
     // Parse command-line options.
     const manifest = {}
-    for (const { name, short, long, required } of config.manifest[command]?.options ?? []) {
+    for (const { name, short, long, type, required } of config.manifest[command]?.options ?? []) {
       let options = []
       if (short) options.push(`-${short}`)
       if (long) options.push(`-${long}`)
-      manifest[options.join(', ')] = `${name}`
+      manifest[options.join(', ')] = (type && type === 'string') ? `${name}` : ''
     }
     const result = getOpts(argv, manifest)
 
@@ -201,7 +201,9 @@ function usage(command) {
   if (options) {
     config.console.log('OPTIONS')
     const params = options
-      .map(({ name, short, long, description, required }) => {
+      .map(({ name, short, long, description, type, required }) => {
+        if (!type) type = 'bool'
+        if (type === 'bool') return { option: `-${short}, --${long}`, desc: `${required ? '(required)' : '(optional)'} ${description}` }
         return { option: `-${short} ${name}, --${long}=${name}`, desc: `${required ? '(required)' : '(optional)'} ${description}` }
       })
     const descriptions = columnify(params, {
