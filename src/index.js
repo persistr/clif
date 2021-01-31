@@ -113,17 +113,20 @@ class CLI extends EventEmitter {
       await cmd.run(toolbox, { ...opts, ...args })
     }
     catch (error) {
-      config.console.log(`Error: ${error.message}`)
+      config.console.log(`ERROR: ${error.message}`)
     }
   }
 }
 
 function unknown(command) {
-  config.console.log(`Unknown command "${command}"`)
+  config.console.log(`ERROR: Unknown command "${command}"\n`)
 }
 
 function missing(command, value) {
-  config.console.log(`Missing required "${value}"`)
+  config.console.log(`ERROR: Missing required "${value}"\n`)
+
+  // Display help page for the command.
+  help(command)
 }
 
 /**
