@@ -95,7 +95,13 @@ class CLI extends EventEmitter {
         if (long) options.push(`-${long}`)
         manifest[options.join(', ')] = (type && type === 'string') ? `${name}` : ''
       }
+      manifest['-h, --help'] = ''
       const result = getOpts(argv, manifest)
+
+      // Display command help, if requested.
+      if (result.options['h'] || result.options['help']) {
+        return help(command)
+      }
 
       // Collect command options.
       const opts = {}
