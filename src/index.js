@@ -118,7 +118,7 @@ class CLI extends EventEmitter {
         if (i < result.argv.length) args[arg] = result.argv[i++]
         const optional = value?.optional
         if (!optional && !args[arg]) throw new Error(`Missing required parameter "${arg}"`)
-        if (value && value.validate) value.validate(args[arg])
+        if (args[arg] && value && value.validate) value.validate(args[arg])
       }
 
       // Run the command.
