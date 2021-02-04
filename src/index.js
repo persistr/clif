@@ -24,12 +24,13 @@ let config = {
 }
 
 class CLI extends EventEmitter {
-  constructor(pkgname, execname) {
+  constructor(pkgname, execname, github) {
     super()
     this.prerun = []
     this.postrun = []
     config.pkgname = pkgname
     config.execname = execname
+    config.github = github
   }
 
   plugins(plugins) {
@@ -67,7 +68,7 @@ class CLI extends EventEmitter {
   }
 
   checkForUpdates() {
-    checkForUpdates(config.pkgname, config.version)
+    checkForUpdates(config.pkgname, config.version, config.github)
     return this
   }
 
@@ -283,7 +284,7 @@ function execname() {
   return path.parse(file).name
 }
 
-module.exports = { build: (pkgname, execname) => { return new CLI(pkgname, execname) }}
+module.exports = { build: (pkgname, execname, github) => { return new CLI(pkgname, execname, github) }}
 
 // In browsers, install a global object.
 const isBrowser = typeof window !== 'undefined' && ({}).toString.call(window) === '[object Window]'

@@ -1,13 +1,14 @@
 const chalk = require('chalk')
 const useUnicode = require('has-unicode')()
 
-function checkForUpdates(name, version) {
+function checkForUpdates(name, version, github) {
   // Don't display updates when running in a CI environment.
   const isCI = require('ci-info').isCI
   if (isCI) return
 
   // Nothing to do if already on latest version.
-  let notifier = require('update-notifier')({ pkg: { name, version }, updateCheckInterval: 0 })
+  const pkg = { name, version }
+  let notifier = require('update-notifier')({ pkg, updateCheckInterval: 0 })
   if (!notifier.update || notifier.update.latest === pkg.version) return
 
   // Apply color to type of update (major/minor/patch).
@@ -24,11 +25,8 @@ function checkForUpdates(name, version) {
       break
   }
 
-  // TODO: Replace hardcoded URL with repo URL from package.json
-  //const changelog = `https://github.com/persistr/cli/releases/tag/v${notifier.update.latest}`
-  const changelog = ``
-
   // Display update message, if needed.
+  const changelog = `${github}/releases/tag/v${notifier.update.latest}`
   notifier.notify({
     isGlobal: true,
     message: `New ${type} version of ${pkg.name} available! ${
