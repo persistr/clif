@@ -6,6 +6,22 @@ const getOpts = require('get-options')
 const { checkForUpdates } = require('./checkForUpdates')
 const { vsprintf } = require('printj')
 const prompts = require('prompts')
+const util = require('util')
+
+const out = (() => {
+  const write = process.stdout.write.bind(process.stdout)
+  const stream = { isDirty: false }
+  stream.markAsClean = () => {
+    stream.isDirty = false
+  }
+  stream.write = (...args) => {
+    stream.isDirty = true
+    return write.apply(null, args)
+  }
+  return stream
+})()
+
+process.stdout.write = out.write
 
 let log = (msg) => {
   process.stdout.write(msg)
@@ -13,9 +29,8 @@ let log = (msg) => {
 
 let config = {
   console: {
-    log: (fmt, ...args) => {
-      if (!fmt) fmt = ''
-      const msg = vsprintf.call(null, `${fmt}\n`, args)
+    log: (...args) => {
+      const msg = util.format.apply(null, [ ...args, '\n' ])
       log(msg)
     }
   },
@@ -123,6 +138,7 @@ class CLI extends EventEmitter {
       }
 
       // Run the command.
+      out.markAsClean()
       const toolbox = { colors, log: config.console.log, prompts, ...config.toolbox }
       const params = { ...opts, ...args }
       for (let prerun of this.prerun) await prerun(toolbox, cmd, params)
@@ -131,7 +147,7 @@ class CLI extends EventEmitter {
     }
     catch (error) {
       // Display help page for the command.
-      if (cmd) {
+      if (cmd && !out.isDirty) {
         help(command)
       }
 
