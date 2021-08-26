@@ -87,7 +87,7 @@ class CLI extends EventEmitter {
     return this
   }
 
-  async run(argv) {
+  async run(argv, options) {
     // Display help.
     if (!argv) argv = process.argv.slice(2)
     if (!argv || argv.length <= 0) return help()
@@ -139,7 +139,7 @@ class CLI extends EventEmitter {
 
       // Run the command.
       out.markAsClean()
-      const toolbox = { colors, log: config.console.log, prompts, ...config.toolbox }
+      const toolbox = { colors, log: config.console.log, prompts, ...config.toolbox, ...options.toolbox }
       const params = { ...opts, ...args }
       for (let prerun of this.prerun) await prerun(toolbox, cmd, params)
       await cmd.run(toolbox, params)
