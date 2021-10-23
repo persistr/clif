@@ -58,6 +58,11 @@ class CLI extends EventEmitter {
     return this
   }
 
+  toolbox(toolbox) {
+    config.toolbox = { ...config.toolbox, ...toolbox }
+    return this
+  }
+
   output(cb) {
     log = cb
     return this
