@@ -50,9 +50,10 @@ class CLI extends EventEmitter {
 
   plugins(plugins) {
     for (const plugin of plugins) {
-      const hooks = plugin.initialize(config.toolbox)
-      if (hooks && hooks.prerun) Array.isArray(hooks.prerun) ? this.prerun.push(...hooks.prerun) : this.prerun.push(hooks.prerun)
-      if (hooks && hooks.postrun) Array.isArray(hooks.postrun) ? this.prerun.push(...hooks.postrun) : this.postrun.push(hooks.postrun)
+      const extension = plugin.initialize(config.toolbox)
+      if (extension?.toolbox) config.toolbox = { ...config.toolbox, ...extension.toolbox }
+      if (extension?.prerun) Array.isArray(extension.prerun) ? this.prerun.push(...extension.prerun) : this.prerun.push(extension.prerun)
+      if (extension?.postrun) Array.isArray(extension.postrun) ? this.prerun.push(...extension.postrun) : this.postrun.push(extension.postrun)
     }
     return this
   }
