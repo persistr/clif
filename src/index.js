@@ -35,7 +35,8 @@ let config = {
     }
   },
   manifest: {},
-  toolbox: {}
+  toolbox: {},
+  exitCodeOnError: () => 1
 }
 
 class CLI extends EventEmitter {
@@ -84,6 +85,11 @@ class CLI extends EventEmitter {
     return this
   }
 
+  exitCodeOnError(fn) {
+    config.exitCodeOnError = fn
+    return this
+  }
+
   done() {
     return this
   }
@@ -104,6 +110,7 @@ class CLI extends EventEmitter {
     const command = argv[0].endsWith(':') ? argv[0].slice(0, -1) : argv[0]
     const cmd = config.manifest[command]
 
+    let exitCode = 0
     try {
       // If command is unknown or not executable, display help.
       if (!cmd) throw new Error(`Unknown command "${command}"`)
@@ -148,10 +155,13 @@ class CLI extends EventEmitter {
       const toolbox = { colors, log: config.console.log, prompts, ...config.toolbox, ...options?.toolbox }
       const params = { ...opts, ...args }
       for (let prerun of this.prerun) await prerun(toolbox, cmd, params)
-      await cmd.run(toolbox, params)
+      exitCode = await cmd.run(toolbox, params)
       for (let postrun of this.postrun) await postrun(toolbox, cmd, params)
     }
     catch (error) {
+      // Obtain the exit code on error (defaults to 1).
+      if (config.exitCodeOnError) exitCode = config.exitCodeOnError(error)
+
       // Display help page for the command.
       if (cmd && !out.isDirty) {
         help(command)
@@ -160,6 +170,7 @@ class CLI extends EventEmitter {
       // Display error message.
       config.console.log('%s %s', 'ERROR:'.brightRed, error.message)
     }
+    return exitCode
   }
 }
 
