@@ -5,7 +5,8 @@
   "main": "src/index.js",
   "scripts": {
     "build": "browserify src/index.js -t [ babelify --plugins [ @babel/plugin-transform-nullish-coalescing-operator @babel/plugin-transform-optional-chaining ] ] > dist/clif.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "version": "npm run build && git add -A dist"
   },
   "repository": {
     "type": "git",
