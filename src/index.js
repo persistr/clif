@@ -100,18 +100,20 @@ class CLI extends EventEmitter {
   }
 
   async run(argv, options) {
-    // Display help.
-    if (!argv) argv = process.argv.slice(2)
-    if (!argv || argv.length <= 0) return help()
-    if (argv.length === 1 && argv[0] === 'help') return help()
-    if (argv.length === 2 && argv[0] === 'help') return help(argv[1])
-
-    // Parse command.
-    const command = argv[0].endsWith(':') ? argv[0].slice(0, -1) : argv[0]
-    const cmd = config.manifest[command]
-
     let exitCode = 0
+    let command = undefined
+    let cmd = undefined
     try {
+      // Display help.
+      if (!argv) argv = process.argv.slice(2)
+      if (!argv || argv.length <= 0) return help()
+      if (argv.length === 1 && argv[0] === 'help') return help()
+      if (argv.length === 2 && argv[0] === 'help') return help(argv[1])
+
+      // Parse command.
+      command = argv[0].endsWith(':') ? argv[0].slice(0, -1) : argv[0]
+      cmd = config.manifest[command]
+
       // If command is unknown or not executable, display help.
       if (!cmd) throw new Error(`Unknown command "${command}"`)
       if (!cmd.run) return help(command)
