@@ -103,6 +103,7 @@ class CLI extends EventEmitter {
     let exitCode = 0
     let command = undefined
     let cmd = undefined
+    let globals = { debug: false }
     try {
       // Display help.
       if (!argv) argv = process.argv.slice(2)
@@ -157,7 +158,7 @@ class CLI extends EventEmitter {
       const toolbox = { colors, log: config.console.log, prompts, ...config.toolbox, ...options?.toolbox }
       const params = { ...opts, ...args }
       for (let prerun of this.prerun) await prerun(toolbox, cmd, params)
-      exitCode = await cmd.run(toolbox, params)
+      exitCode = await cmd.run(toolbox, params, globals)
       for (let postrun of this.postrun) await postrun(toolbox, cmd, params)
     }
     catch (error) {
@@ -170,7 +171,12 @@ class CLI extends EventEmitter {
       }
 
       // Display error message.
-      config.console.log('%s %s', 'ERROR:'.brightRed, error.message)
+      if (globals.debug) {
+        config.console.log(error)
+      }
+      else {
+        config.console.log('%s %s', 'ERROR:'.brightRed, error.message)
+      }
     }
     return exitCode
   }
